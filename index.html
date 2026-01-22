@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Prayer App</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2c3e50">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Prayers">
+
+<link rel="apple-touch-icon" sizes="512x512" href="prayerIcon512.png">
+<link rel="apple-touch-icon" sizes="192x192" href="prayerIcon192.png">
+
+<style>
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
+  background: #ddd;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+}
+
+.app {
+  width: 100%;
+  max-width: 420px;
+  height: 100vh;
+  background: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background: #2c3e50;
+  padding: 15px;
+  color: white;
+  text-align: center;
+  position: relative;
+}
+
+.settings-btn {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.welcome {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.header input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-size: 16px;
+}
+
+.screen {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+}
+
+.hidden { display: none; }
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  background: #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #2c3e50;
+  color: white;
+}
+
+.prayer-item {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.prayer-item:active { background: #eee; }
+
+.suggested {
+  border-left: 6px solid #2c3e50;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #2c3e50;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.favorite-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.detail-image {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  display: none;
+}
+
+.detail-title {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.detail-prayer {
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.settings input {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <div class="header" id="listHeader">
+    <div class="settings-btn" id="settingsBtn">⚙️</div>
+    <div class="welcome" id="welcomeText"></div>
+    <input id="searchBar" placeholder="Search prayers...">
+  </div>
+
+  <div class="screen" id="listScreen">
+    <div class="tabs">
+      <div class="tab active" id="allTab">All</div>
+      <div class="tab" id="favTab">Favorites</div>
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <div class="screen hidden" id="settingsScreen">
+    <button class="back-btn" id="settingsBack">← Back</button>
+    <h3>Your Name</h3>
+    <input id="nameInput" placeholder="Enter your name">
+  </div>
+
+  <div class="header hidden" id="detailHeader">
+    <h2>Prayer</h2>
+  </div>
+
+  <div class="screen hidden" id="detailScreen">
+    <button class="back-btn" id="backBtn">← Back</button>
+    <button class="favorite-btn" id="favBtn">🤍</button>
+
+    <img id="detailImage" class="detail-image">
+
+    <div class="detail-title" id="detailTitle"></div>
+    <div class="detail-prayer" id="detailPrayer"></div>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const prayers = [
+    {
+      title: "Morning Prayer",
+      image: "morning.png",
+      prayer: "Dear Lord, I do not know what will happen to me today — I only know that nothing will happen that was not foreseen by you and directed to my greater good from all eternity. I adore your holy and unfathomable plans, and submit to them with all my heart for love of you, the pope, and the Immaculate Heart of Mary. Amen."
+    },
+    {
+      title: "Day Prayer",
+      image: "day.png",
+      prayer: "temporary"
+    },
+    {
+      title: "Evening Prayer",
+      image: "evening.png",
+      prayer: "God our Father, I come to say, Thank you for your love today, Thank you for my family and all the friends you give to me. Guard me in the dark of night, and in the morning send your light."
+    },
+    {
+      title: "Our Father",
+      image: "jesus.png",
+      prayer: "Our Father, Who art in heaven, hallowed be Thy name. Thy kingdom come, Thy will be done, on earth as it is in heaven. Give us this day our daily bread, and forgive us our trespasses as we forgive those who trespass against us, and lead us not into temptation, but deliver us from evil. Amen."
+    },
+    {
+      title: "Hail Mary",
+      image: "mary.png",
+      prayer: "Hail Mary, full of grace, the Lord is with thee. Blessed art thou amongst women, and blessed is the fruit of thy womb, Jesus. Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen."
+    },
+    {
+      title: "Glory Be",
+      image: "",
+      prayer: "Glory be to the Father, and to the Son, and to the Holy Spirit, as it was in the beginning, is now, and ever shall be, world without end. Amen."
+    },
+    {
+      title: "The Apostle's Creed",
+      image: "",
+      prayer: "I believe in God, the Father Almighty, Creator of Heaven and earth; and in Jesus Christ, His only Son, Our Lord, Who was conceived by the Holy Spirit, born of the Virgin Mary, suffered under Pontius Pilate, was crucified, died, and was buried. He descended into Hell, on the third day He arose again from the dead. He ascended into Heaven, and is seated at the right hand of God the Father Almighty; from thence He shall come to judge the living and the dead. I believe in the Holy Spirit, the holy Catholic Church, the communion of saints, the forgiveness of sins, the resurrection of the body, and the life everlasting. Amen."
+    },
+    {
+      title: "The Nicene Creed",
+      image: "",
+      prayer: "I believe in one God, the Father, the Almighty, Maker of all that is, seen and unseen. I believe in one Lord, Jesus Christ, the only Son of God, eternally begotten of the Father, God from God, Light from Light, true God from true God, begotten, not made, consubstantial of one Being with the Father. Through him all things were made. For us and for our salvation he came down from heaven: and by the Holy Spirit was incarnate he became incarnate from the Virgin Mary, and was made man. For our sake he was crucified under Pontius Pilate; he suffered death and was buried. On the third day he rose again in accordance with the Scriptures; he ascended into heaven and is seated at the right hand of the Father. He will come again in glory to judge the living and the dead, and his kingdom will have no end. I believe in the Holy Spirit, the Lord, the giver of life,  who proceeds from the Father and the Son. With the Father and the Son he is worshipped and glorified. He has spoken through the Prophets. I believe in one holy catholic and apostolic Church. I acknowledge one baptism for the forgiveness of sins. I look for the resurrection of the dead, and the life of the world to come. Amen."
+    },
+    {
+      title: "Saint Michael Prayer",
+      image: "",
+      prayer: "Saint Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil. May God rebuke him, we humbly pray, and do thou, O Prince of the heavenly host, by the power of God, cast into hell Satan and all the evil spirits who prowl throughout the world seeking the ruin of souls. Amen."
+    },
+    {
+      title: "Act of Contrition",
+      image: "",
+      prayer: "O my God, I am heartfully sorry for having offended thee, and I detest all my sins because of thy just punishment, but most of all because I have offended thee my God, who is all good and deserving of all my love. I firmly resolve, with the help of thy grace, to sin no more, and to avoid the near occasion of sin. Amen."
+    },
+    {
+      title: "Miraculous Medal Prayer",
+      image: "",
+      prayer: "O Mary, Conceived without Sin, pray for us who have recourse to thee, and for those who do not have recourse to thee, especially the enemies of the Church. Amen."
+    },
+    {
+      title: "Guardian Angel Prayer",
+      image: "",
+      prayer: "Angel of God, my guardian dear, to whom God's love commits me here, ever this day be at my side, to light and guard, to rule and guide. Amen."
+    },
+    {
+      title: "Prayer of Surrender",
+      image: "",
+      prayer: "Lord Jesus Christ, take all my freedom, my understanding, and my will. All that I have and cherish you have given to me. I surrender it all to be guided by your will. Your love and your grace are wealth enough for me. Give me these, Lord Jesus, and I ask for nothing more. Amen."
+    },
+    {
+      title: "Grace Before Meals",
+      image: "",
+      prayer: "Bless us, O Lord, and these thy gifts, which we are about to receive, from thy bounty, through Christ our Lord. Amen."
+    },
+    {
+      title: "Grace After Meals",
+      image: "",
+      prayer: "We give thee thanks for all thy benefits, O Almighty God, who lives and reigns, world without end. Amen. May the souls of the faithful departed, through the mercy of God, rest in peace. Amen."
+    },
+    {
+      title: "Sign of the Cross",
+      image: "",
+      prayer: "In the name of the Father, and of the Son, and of the Holy Spirit. Amen"
+    },
+    {
+      title: "The Rosary",
+      image: "",
+      prayer: `Begin by holding the crucifix, saying “In the Name of the Father and of the Son and of the Holy Spirit,” (making the sign of the Cross while doing that), then say the Apostles Creed.
+              On the single bead just above the cross, pray the “Our Father.” This and all prayers of the rosary are meditative prayers.
+              The next cluster has 3 beads. The “Hail Mary” prayer is said on these three beads. You pray the 3 Hail Marys while meditating on the three divine virtues of faith, hope, and love/charity.
+              On the chain or cord after the three beads, say the “Glory be…”
+              On the next bead, which is a single bead, you announce the first divine mystery of contemplation.  For example, if it were a Monday, you would say the first Joyful Mystery is “The Annunciation”, at this point you pray the “Our Father” prayer.
+              Now this will bring you to the first decade, or set of 10 beads of the Rosary.  You will then pray 10 Hail Marys while contemplating the first mystery, example: The Annunciation.
+              After the 10th Hail Mary you will have completed the first of 5 decades which make up a Chaplet of the Rosary. You now come to another single bead, at this point, you pray the… Glory be to the Father… then (on the same bead) pray the O My Jesus… then (on the same bead) announce the next or second mystery. For example: if its Monday and your praying the Joyful Mysteries, the second Joyful Mystery is The Visitation.   At this point you pray the Our Father….
+              You will now come to the second decade or group of 10 beads, you will now pray the 10 Hail Marys while contemplating the appropriate mystery.
+              You continue to pray the rosary the same way throughout. If your intention is to pray a Chaplet (a single set of mysteries) at the end of the fifth mystery you will come back to the joiner, this is where the decades all join with the lower part of the rosary which contains the cross.  When you come to the joiner, you decide whether or not you wish to say another Chaplet or end.  If you decide to say another Chaplet you simply announce the next mystery and continue. If you wish to end, you simply say the Glory Be To The Father, the O My Jesus, The Our Father and end the rosary with the Hail Holy Queen and the sign of the Cross……..
+              ## The Joyful Mysteries
+              The Annunciation
+              The Visitation
+              The Nativity
+              The Presentation in the Temple
+              The Finding in the Temple
+              ## The Sorrowful Mysteries
+              The Agony in the Garden
+              The Scourging at the Pillar
+              The Crowning with Thorns
+              The Carrying of the Cross
+              The Crucifixion and Death
+              ## The Glorious Mysteries
+              The Resurrection
+              The Ascension
+              The Descent of the Holy Spirit
+              The Assumption
+              The Coronation of Mary
+              ## The Luminous Mysteries
+              The Baptism of Christ in the Jordan
+              The Wedding Feast at Cana
+              Jesus’ Proclamation of the Coming
+              The Transfiguration
+              The Institution of the Eucharist as a Sacrament`
+    },
+    {
+      title: "The Gloria",
+      image: "",
+      prayer: "Glory to God in the highest. And on earth peace to men of good will. We praise You. We bless You. We adore you. We glorify You. We give You thanks for Your great glory. O Lord God, heavenly King, God the Father almighty. O Lord Jesus Christ, the Only-begotten Son. O Lord God, Lamb of God, Son of the Father: you Who take away the sins of the world, have mercy on us. You Who take away the sins of the world, receive our prayer. You Who sit at the right hand of the Father, have mercy on us. For you alone are holy. You alone are the Lord. You alone, O Jesus Christ, are most high. Together with the Holy Spirit in the glory of God the Father. Amen."
+    },
+    {
+      title: "Prayer to Jesus",
+      image: "jesus.png",
+      prayer: "Christ be with me, Christ be beside me, Christ be before me, Christ be behind me, Christ be at my right hand, Christ be at my left hand, Christ be with me everywhere I go, Christ be my friend, for ever and ever, Amen"
+    },
+    {
+      title: "Prayer to Mary",
+      image: "mary.png",
+      prayer: "Mary, mother of Jesus, I want to live and love like you. I want to love the Father, I want to love like Jesus. Mother of Jesus, blessed are you, Mother of Jesus, my mother too. Help me to live like Jesus, and help me to live like you."
+    },
+    {
+      title: "A Prayer",
+      image: "",
+      prayer: `We have eyes to look and see.
+               We praise you, we bless you, we thank you.
+               We have hands to hold and make.
+               We praise you, we bless you, we thank you.
+               We have friends who love and care.
+               We praise you, we bless you, we thank you.
+               We have Jesus, who shows us the way to live.
+               We praise you, we bless you, we thank you.`
+    },
+    {
+      title: "The 10 Commandments",
+      image: "",
+      prayer: `The Ten Commandments
+1. I am the Lord thy God. Thou shall not have strange gods before Me.
+2. Thou shall not take the name of the Lord thy God in vain.
+3. Remember to keep holy the Lord's day.
+4. Honor thy father and mother.
+5. Thou shall not kill.
+6. Thou shall not commit adultery.
+7. Thou shall not steal.
+8. Thou shall not bear false witness against thy neighbor.
+9. Thou shall not covet thy neighbor's wife.
+10. Thou shall not covet thy neighbor's goods.`
+    },
+    {
+      title: "The Seven Sacraments",
+      image: "",
+      prayer: `These are the Seven Sacraments of the Catholic Church:
+Baptism
+Confirmation
+Eucharist
+Penance
+Anointing of the sick
+Matrimony
+Holy orders`
+    },
+  ];
+
+  const listHeader = document.getElementById("listHeader");
+  const listScreen = document.getElementById("listScreen");
+  const detailHeader = document.getElementById("detailHeader");
+  const detailScreen = document.getElementById("detailScreen");
+  const settingsScreen = document.getElementById("settingsScreen");
+
+  const listEl = document.getElementById("list");
+  const searchBar = document.getElementById("searchBar");
+  const welcomeText = document.getElementById("welcomeText");
+  const nameInput = document.getElementById("nameInput");
+
+  const detailTitle = document.getElementById("detailTitle");
+  const detailPrayer = document.getElementById("detailPrayer");
+  const detailImage = document.getElementById("detailImage");
+  const favBtn = document.getElementById("favBtn");
+
+  let currentPrayer = null;
+  let currentTab = "all";
+  let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+  let userName = localStorage.getItem("userName") || "";
+
+  nameInput.value = userName;
+  
+  function getTimeInfo() {
+    const h = new Date().getHours();
+    if (h < 12) return { greet: "Good Morning", prayer: "Morning Prayer" };
+    if (h < 18) return { greet: "How has your day been", prayer: "Day Prayer" };
+    return { greet: "Good Evening", prayer: "Evening Prayer" };
+  }
+
+  function updateWelcome() {
+    const t = getTimeInfo();
+    welcomeText.textContent = userName ? `${t.greet} ${userName}!` : `${t.greet}!`;
+  }
+
+  function renderList() {
+    listEl.innerHTML = "";
+    const search = searchBar.value.toLowerCase();
+    const suggested = getTimeInfo().prayer;
+
+    prayers
+      .filter(p => p.title.toLowerCase().includes(search))
+      .filter(p => currentTab === "all" || favorites.includes(p.title))
+      .forEach(p => {
+        const div = document.createElement("div");
+        div.className = "prayer-item";
+        if (p.title === suggested) div.classList.add("suggested");
+        div.textContent = p.title;
+        div.onclick = () => openPrayer(p);
+        listEl.appendChild(div);
+      });
+  }
+
+  function openPrayer(prayer) {
+    currentPrayer = prayer;
+
+    listHeader.classList.add("hidden");
+    listScreen.classList.add("hidden");
+    detailHeader.classList.remove("hidden");
+    detailScreen.classList.remove("hidden");
+
+    detailTitle.textContent = prayer.title;
+    detailPrayer.innerHTML = prayer.prayer
+  .split(/\n\s*\n/)
+  .map(p => `<p>${p.trim()}</p>`)
+  .join("");
+
+
+    if (prayer.image) {
+      detailImage.src = prayer.image;
+      detailImage.style.display = "block";
+    } else {
+      detailImage.style.display = "none";
+    }
+
+    updateFavBtn();
+  }
+
+  function goBack() {
+    detailHeader.classList.add("hidden");
+    detailScreen.classList.add("hidden");
+    settingsScreen.classList.add("hidden");
+    listHeader.classList.remove("hidden");
+    listScreen.classList.remove("hidden");
+  }
+
+  function toggleFavorite() {
+    const t = currentPrayer.title;
+    favorites = favorites.includes(t)
+      ? favorites.filter(f => f !== t)
+      : [...favorites, t];
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+    updateFavBtn();
+  }
+
+  function updateFavBtn() {
+    favBtn.textContent = favorites.includes(currentPrayer.title) ? "❤️" : "🤍";
+  }
+
+  document.getElementById("allTab").onclick = () => { currentTab = "all"; renderList(); };
+  document.getElementById("favTab").onclick = () => { currentTab = "favorites"; renderList(); };
+  document.getElementById("backBtn").onclick = goBack;
+  document.getElementById("settingsBtn").onclick = () => {
+    listScreen.classList.add("hidden");
+    settingsScreen.classList.remove("hidden");
+  };
+  document.getElementById("settingsBack").onclick = () => {
+    userName = nameInput.value.trim();
+    localStorage.setItem("userName", userName);
+    updateWelcome();
+    goBack();
+  };
+
+  favBtn.onclick = toggleFavorite;
+  searchBar.oninput = renderList;
+
+  updateWelcome();
+  renderList();
+});
+</script>
+
+</body>
+</html>
