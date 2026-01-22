@@ -3,7 +3,7 @@
   "short_name": "Pray",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f4f4f8",
+  "background_color": "#f9f9f9",
   "theme_color": "#cc0000",
   "orientation": "portrait"
   "icons": [
