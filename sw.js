@@ -1,39 +1,40 @@
-const CACHE_NAME = 'prayer-app-v1';
-const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon192.png',
-  './icon512.png',
-  './jesus.png',
-  './mary.png',
-  './morning.png',
-  './day.png',
-  './evening.png',
-  './style.css', 
-  './app.js' 
+const CACHE_NAME = "prayer-app-v2";
+
+const urlsToCache = [
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./icon192.png",
+  "./icon512.png",
+  "./morning.png",
+  "./night.png",
+  "./day.png",
+  "./jesus.png",
+  "./mary.png"
 ];
 
-self.addEventListener('install', event => {
+self.addEventListener("install", event => {
+
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS_TO_CACHE))
+
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+
   );
+
 });
 
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
-      )
-    )
-  );
-});
+self.addEventListener("fetch", event => {
 
-self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request))
+
+    caches.match(event.request)
+      .then(response => {
+
+        return response || fetch(event.request);
+
+      })
+
   );
+
 });
